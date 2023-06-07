@@ -1,5 +1,6 @@
 'use client'
 
+import {signIn} from 'next-auth/react';
 import axios from 'axios'
 import { AiFillGithub } from 'react-icons/ai';
 import { FcGoogle } from 'react-icons/fc';
@@ -17,10 +18,12 @@ import Heading from '../Heading';
 import Input from '../inputs/Input';
 import toast from 'react-hot-toast';
 import Button from '../Button';
+import { useRouter } from 'next/navigation';
 
 
 
 const LoginModal = () => {
+    const router = useRouter();
     const loginModal = useLoginModal();
     const registerModal = useRegisterModal();
     const [isLoading, setIsLoading] = useState(false);
@@ -39,17 +42,24 @@ const LoginModal = () => {
 
         const onSubmit: SubmitHandler<FieldValues> = (data) => {
             setIsLoading(true);
-            axios.post('/api/register', data)
-            .then((res) => {
-                registerModal.onClose();
+           
+            signIn('credentials', {
+                ...data,
+                redirect: false,
             })
-            .catch((err) => {
-                console.log(err);
-                toast.error('Something went wrong');
+            .then((callback) => {
+                setIsLoading(false);
+
+                if(callback?.ok){
+                toast.success('Logged In');
+                router.refresh();
+                loginModal.onClose();
+                }
+
+                if(callback?.error){
+                    toast.error(callback.error);
+                }
             }
-            )
-            .finally(() => {
-                setIsLoading(false)}
             )
         }
 
